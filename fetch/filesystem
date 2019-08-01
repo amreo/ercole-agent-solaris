@@ -1,0 +1,15 @@
+#!/bin/sh
+OPERATING_SYSTEM=$(uname -o)
+
+if [ "$OPERATING_SYSTEM" = "GNU/Linux" ]; then
+    df -PhT | sed 1d | sort -k7
+elif [ "$OPERATING_SYSTEM" = "Solaris" ]; then
+    TMPFILE1=$(mktemp)
+    TMPFILE2=$(mktemp)
+    df -n | tr ':' ' ' |sort -k1 > "$TMPFILE1"
+    df -Ph | sed 1d | sort -k6 > "$TMPFILE2"
+    paste "$TMPFILE1" "$TMPFILE2" | awk ' { $1=""; t = $2; $2 = $3; $3 = t; print; } ' 
+    rm "$TMPFILE1"
+    rm "$TMPFILE2"
+fi
+

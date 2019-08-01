@@ -1,0 +1,6 @@
+PKG=ercole-agent
+NAME=ercole-agent is ercole's agent  
+ARCH=x86
+VERSION=beta 0.9
+CATEGORY=system
+BASEDIR=/

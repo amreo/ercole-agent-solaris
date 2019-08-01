@@ -1,0 +1,19 @@
+#!/bin/sh
+
+SID=$1
+
+if [ -z "$SID" ]; then
+  echo "Missing SID parameter"
+  exit 1
+fi
+
+export ORAENV_ASK=NO 
+export ORACLE_SID=$SID
+. oraenv 1>/dev/null
+
+ERCOLE_HOME=/opt/ERCOLE-agent
+if [ ! -d ${ERCOLE_HOME} ]; then
+  ERCOLE_HOME=.
+fi
+
+sqlplus -S "/ AS SYSDBA" < ${ERCOLE_HOME}/sql/schema.sql

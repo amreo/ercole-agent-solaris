@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<!DOCTYPE service_bundle
+  SYSTEM '/usr/share/lib/xml/dtd/service_bundle.dtd.1'>
+<!--
+    Manifest created by svcbundle (2018-ott-04 14:33:54+0200)
+-->
+<service_bundle type="manifest" name="ercole-agent">
+    <service version="1" type="service" name="ercole-agent">
+        <!--
+            The following dependency keeps us from starting until the
+            multi-user milestone is reached.
+        -->
+        <dependency restart_on="none" type="service"
+            name="multi_user_dependency" grouping="require_all">
+            <service_fmri value="svc:/milestone/multi-user"/>
+        </dependency>
+        <exec_method timeout_seconds="180" type="method" name="start"
+            exec="/lib/svc/method/ercole-agent-start"/>
+        <!--
+            The exec attribute below can be changed to a command that SMF
+            should execute to stop the service.  Use svcbundle -s
+            stop-method to set the attribute.
+        -->
+        <exec_method timeout_seconds="60" type="method" name="stop"
+            exec=":kill"/>
+        <!--
+            The exec attribute below can be changed to a command that SMF
+            should execute when the service is refreshed.  Use svcbundle -s
+            refresh-method to set the attribute.
+        -->
+        <exec_method timeout_seconds="60" type="method" name="refresh"
+            exec=":true"/>
+        <!--
+            We do not need a duration property group, because contract is
+            the default.  Search for duration in svc.startd(8).
+        -->
+        <instance enabled="true" name="default"/>
+        <template>
+            <common_name>
+                <!--
+                    Replace loctext content with a short name for the
+                    service.
+                -->
+                <loctext xml:lang="C">
+                        ercole-agent
+                </loctext>
+            </common_name>
+            <description>
+                <!--
+                    Replace loctext content with a brief description of the
+                    service
+                -->
+                <loctext xml:lang="C">
+                        The ercole-agent service.
+                </loctext>
+            </description>
+        </template>
+    </service>
+</service_bundle>

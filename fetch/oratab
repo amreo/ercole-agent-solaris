@@ -1,0 +1,2 @@
+#!/bin/sh
+cat /etc/oratab | grep -v "^#" | cut -d':' -f1 | grep -v "^$"

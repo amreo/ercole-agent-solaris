@@ -1,0 +1,86 @@
+#!/bin/sh
+
+SID=$1
+TYPE=$2
+DBV=$3
+OPERATING_SYSTEM=$(uname -o)
+
+if [ -z "$SID" ]; then
+  echo "Missing SID parameter"
+  exit 1
+fi
+
+if [ -z "$TYPE" ]; then
+  echo "Missing type parameter"
+  exit 1
+fi
+
+if [ -z "$DBV" ]; then
+  echo "Missing DBV parameter"
+  exit 1
+fi
+
+ERCOLE_HOME=/opt/ERCOLE-agent
+if [ ! -d ${ERCOLE_HOME} ]; then
+  ERCOLE_HOME=.
+fi
+
+export ORAENV_ASK=NO 
+export ORACLE_SID=$SID
+. oraenv 1>/dev/null
+
+DB_VERSION=$(sqlplus -S / as sysdba << EOF
+set pages 0 feedback off
+select (case when UPPER(banner) like '%EXTREME%' then 'EXE' when UPPER(banner) like '%ENTERPRISE%' then 'ENT' else 'STD' end) as versione from v\$version where rownum=1;
+exit
+EOF
+)
+
+LICENSING_CPU_CORES=$(nproc --all)
+
+if [ "$TYPE" = 'OVM' ] || [ "$TYPE" = 'VMWARE' ] || [ "$TYPE" = 'VMOTHER' ]; then
+  if [ "$DB_VERSION" = 'EXE' ] || [ "$DB_VERSION" = 'ENT' ]; then
+    CORE_FACTOR=$(echo 0.25*"$LICENSING_CPU_CORES"|bc)
+    FACTOR=0.25
+  elif [ "$DB_VERSION" = 'STD' ]; then
+    CORE_FACTOR=0
+    FACTOR=0
+  fi
+elif [ "$TYPE" = 'PH' ]; then
+  if [ "$DB_VERSION" = 'EXE' ] || [ "$DB_VERSION" = 'ENT' ]; then
+    CORE_FACTOR=$(echo 0.25*"$LICENSING_CPU_CORES"|bc)
+    FACTOR=0.25
+  elif [ "$DB_VERSION" = 'STD' ]; then
+  if [ "$OPERATING_SYSTEM" = "GNU/Linux" ]; then
+    CORE_FACTOR=$(grep -i "physical id" /proc/cpuinfo |sort -n|uniq|wc -l)
+    FACTOR=$CORE_FACTOR
+  elif [ "$OPERATING_SYSTEM" = "Solaris" ]; then
+    CORE_FACTOR=$(psrinfo -p)
+    FACTOR=$CORE_FACTOR
+  fi
+  fi
+fi
+
+if [ "$DB_VERSION" = 'EXE' ]; then
+  echo "Oracle EXE; $CORE_FACTOR;"
+else
+  echo "Oracle EXE;;"
+fi
+if [ "$DB_VERSION" = 'ENT' ]; then
+  echo "Oracle ENT; $CORE_FACTOR;"
+else
+  echo "Oracle ENT;;"
+fi
+if [ "$DB_VERSION" = 'STD' ]; then
+  echo "Oracle STD; $CORE_FACTOR;"
+else
+  echo "Oracle STD;;"
+fi
+
+
+if [ "$DBV" = "11" ] ||  [ "$DBV" = "12" ]; then
+  sqlplus -S "/ AS SYSDBA" @${ERCOLE_HOME}/sql/license.sql "$LICENSING_CPU_CORES" "$FACTOR"
+else
+  sqlplus -S "/ AS SYSDBA" @${ERCOLE_HOME}/sql/license-10.sql "$LICENSING_CPU_CORES" "$FACTOR"
+fi
+
